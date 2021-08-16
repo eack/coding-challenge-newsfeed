@@ -5,12 +5,12 @@ import {useState} from "react"
 import Card from "../components/Card";
 import {gql, useQuery} from "@apollo/client";
 import styled from "styled-components";
-import AnnouncementCard from "../components/AnnouncementCard";
+import AnnouncementFeed from "../components/AnnouncementFeed";
 
 
 const ANNOUNCEMENTS_QUERY = gql`
-  query announcements($fellowship: String!) {
-    announcements(fellowship: $fellowship) {
+  query announcements($fellowship: String!, $offset: Int, $limit: Int) {
+    announcements(fellowship: $fellowship, offset: $offset, limit: $limit) {
       id
       fellowship
       title
@@ -25,6 +25,8 @@ type QueryAnnouncementsData = {
 
 type QueryAnnouncementsVars = {
     fellowship: string;
+    offset: number;
+    limit: number;
 }
 
 type Announcement = {
@@ -42,14 +44,13 @@ export default function Home() {
     ]);
     const [value, setValue] = useState<string>("founder");
 
-    const queryAnnouncements = useQuery<QueryAnnouncementsData, QueryAnnouncementsVars>(
+    const { data, fetchMore } = useQuery<QueryAnnouncementsData, QueryAnnouncementsVars>(
         ANNOUNCEMENTS_QUERY,
         {
-            variables: {fellowship: value},
+            variables: {fellowship: value, offset: 0, limit: 1},
+            fetchPolicy: "cache-and-network"
         }
     )
-    const announcements: Announcement[] = queryAnnouncements.data?.announcements || [];
-
 
     function handleSetValue(value: string) {
         setValue(value);
@@ -83,10 +84,28 @@ export default function Home() {
                      Check out the <Link href="/projects">projects</Link>!
                 </div>}
             </Card>
-            <h1 style={{marginTop: "1em"}}>Announcements (for {value}s)</h1>
-            {announcements.map((announcement: Announcement) => (
-                <AnnouncementCard key={announcement.id} announcement={announcement} style={announcementStyle} />
-            ))}
+
+            {({ data, fetchMore }: any) =>
+                data && (
+                    <AnnouncementFeed
+                        value={value}
+                        announcements={data.announcements || []}
+                        onLoadMore={() =>
+                            fetchMore({
+                                variables: {
+                                    offset: data.announcements.length
+                                },
+                                updateQuery: (prev: any, { fetchMoreResult }: any) => {
+                                    if (!fetchMoreResult) return prev;
+                                    return Object.assign({}, prev, {
+                                        announcements: [...prev.announcements, ...fetchMoreResult.announcements]
+                                    });
+                                }
+                            })
+                        }
+                    />
+                )
+            }
         </Layout>
     )
 }
@@ -96,7 +115,3 @@ const Hr = styled.div`
   border: 0;
   border-top: 1px solid #cecece;
 `
-
-const announcementStyle = {
-    margin: "1em"
-}

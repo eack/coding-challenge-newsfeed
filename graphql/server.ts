@@ -30,7 +30,7 @@ const typeDefs = gql`
     project(id: Int!): Project!
     user(id: Int!): User!
     projects: [Project]
-    announcements(fellowship: String!): [Announcement]
+    announcements(fellowship: String!, offset: Int, limit: Int): [Announcement]
   }
 `;
 

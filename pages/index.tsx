@@ -4,28 +4,13 @@ import Layout from 'components/Layout'
 import {useState} from "react"
 import Card from "../components/Card";
 import {gql, useQuery} from "@apollo/client";
-import ProjectCard from "../components/ProjectCard";
 import styled from "styled-components";
+import AnnouncementCard from "../components/AnnouncementCard";
 
-const PROJECTS_QUERY = gql`
-  query projects {
-    projects {
-      id
-      name
-      description
-      icon_url
-      users {
-        id
-        name
-        avatar_url
-      }
-    }
-  }
-`
 
 const ANNOUNCEMENTS_QUERY = gql`
-  query announcements {
-    announcements {
+  query announcements($fellowship: String!) {
+    announcements(fellowship: $fellowship) {
       id
       fellowship
       title
@@ -34,26 +19,12 @@ const ANNOUNCEMENTS_QUERY = gql`
   }
 `
 
-type QueryProjectData = {
-    projects: [Project];
-}
-
 type QueryAnnouncementsData = {
     announcements: [Announcement];
 }
 
-type Project = {
-    id: number;
-    name: string;
-    description: string;
-    icon_url: string;
-    users: User[];
-}
-
-type User = {
-    id: number;
-    name: string;
-    avatar_url: string;
+type QueryAnnouncementsVars = {
+    fellowship: string;
 }
 
 type Announcement = {
@@ -71,15 +42,11 @@ export default function Home() {
     ]);
     const [value, setValue] = useState<string>("founder");
 
-    const {data, error, loading} = useQuery<QueryProjectData, {}>(
-        PROJECTS_QUERY,
-        {}
-    )
-    const projects: Project[] = data?.projects || [];
-
-    const queryAnnouncements = useQuery<QueryAnnouncementsData, {}>(
+    const queryAnnouncements = useQuery<QueryAnnouncementsData, QueryAnnouncementsVars>(
         ANNOUNCEMENTS_QUERY,
-        {}
+        {
+            variables: {fellowship: value},
+        }
     )
     const announcements: Announcement[] = queryAnnouncements.data?.announcements || [];
 
@@ -110,49 +77,26 @@ export default function Home() {
                         <option key={value} value={value}>{label}</option>
                     ))}
                 </select>
+                {['founder', 'angel'].includes(value) &&
+                <div>
+                    <Hr/>
+                     Check out the <Link href="/projects">projects</Link>!
+                </div>}
             </Card>
-            <Columns>
-                {['founder', 'angel'].includes(value) ?
-                    <ColumnLeft>
-                        <Card style={{marginTop: "2em"}}>
-                            <h1>Projects (for {value}s)</h1>
-
-                            {loading ? '' :
-                                projects.map((project: Project) => (
-                                    <ProjectCard key={project.id} project={project}/>
-                                ))}
-                        </Card>
-                    </ColumnLeft>
-                    : ''}
-                <ColumnRight>
-                    <Card style={{marginTop: "2em"}}>
-                        <h1>Announcements (for {value}s)</h1>
-                        {announcements.length}
-                    </Card>
-                </ColumnRight>
-            </Columns>
+            <h1 style={{marginTop: "1em"}}>Announcements (for {value}s)</h1>
+            {announcements.map((announcement: Announcement) => (
+                <AnnouncementCard key={announcement.id} announcement={announcement} style={announcementStyle} />
+            ))}
         </Layout>
     )
 }
 
-const Columns = styled.div`
-  display: flex;
-  flex-direction: row;
-  min-width: 21rem;
-`
-const ColumnLeft = styled.div`
-  display: flex;
-  flex-direction: column;
-  flex-basis: 7rem;
-  flex-grow: 0;
-  flex-shrink: 0;
-  margin-right: 1.5rem;
+const Hr = styled.div`
+  margin: 1em 0;
+  border: 0;
+  border-top: 1px solid #cecece;
 `
 
-const ColumnRight = styled.div`
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-  flex-shrink: 0;
-  flex-basis: 14rem;
-`
+const announcementStyle = {
+    margin: "1em"
+}

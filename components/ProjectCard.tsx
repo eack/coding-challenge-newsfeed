@@ -5,6 +5,7 @@ import Markdown from './Markdown'
 
 type Props = {
   project: Project;
+  style?: object
 }
 
 type Project = {
@@ -21,9 +22,9 @@ type User = {
   avatar_url: string;
 }
 
-export default function ProjectCard({project}: Props) {
+export default function ProjectCard({project, style}: Props) {
   return (
-    <Card>
+    <Card style={style}>
       <Columns>
         <ColumnLeft>
           <Icon src={project.icon_url}/>

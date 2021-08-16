@@ -1,8 +1,12 @@
 import db, {AnnouncementRow} from '../../db'
 
-export default async function announcements(): Promise<AnnouncementRow[]> {
+type Args = {
+  fellowship: string;
+}
+
+export default async function announcements(parent: unknown, {fellowship}: Args): Promise<AnnouncementRow[]> {
   return await db.getAll(
-      'SELECT * FROM announcements ORDER BY date(created_ts) DESC',
-      []
+      'SELECT * FROM announcements WHERE fellowship = ? OR fellowship = ? ORDER BY date(created_ts) DESC',
+      ['all', fellowship]
   )
 }

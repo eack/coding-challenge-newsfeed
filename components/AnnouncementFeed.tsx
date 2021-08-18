@@ -1,9 +1,11 @@
 import React from 'react';
 import AnnouncementCard from "./AnnouncementCard";
+import Button from "./Button";
 
 type Props = {
     value: string;
     announcements: Announcement[];
+    endReached: boolean;
     onLoadMore: any;
 }
 
@@ -15,7 +17,6 @@ type Announcement = {
 }
 
 const handleScroll = ({currentTarget}: any, onLoadMore: any) => {
-    console.log('a')
     if (
         currentTarget.scrollTop + currentTarget.clientHeight >=
         currentTarget.scrollHeight
@@ -24,13 +25,19 @@ const handleScroll = ({currentTarget}: any, onLoadMore: any) => {
     }
 };
 
-const AnnouncementFeed = ({value, announcements, onLoadMore}: Props) => (
-    <div onScroll={e => handleScroll(e, onLoadMore)}>
+const AnnouncementFeed = ({value, announcements, onLoadMore, endReached}: Props) => (
+    <div onScroll={e => handleScroll(e, onLoadMore)} style={{overflow: 'auto'}}>
         <h1 style={{marginTop: "1em"}}>Announcements (for {value}s)</h1>
 
         {announcements.map((announcement: Announcement) => (
             <AnnouncementCard key={announcement.id} announcement={announcement} style={announcementStyle}/>
         ))}
+
+        {!endReached && (
+            <div style={{textAlign: 'center', padding: '1em'}}>
+                <Button onClick={e => handleScroll(e, onLoadMore)}>Load More</Button>
+            </div>
+        )}
     </div>
 )
 

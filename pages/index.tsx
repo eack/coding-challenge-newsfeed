@@ -43,8 +43,9 @@ export default function Home() {
         {label: "Writer", value: "writer"}
     ]);
     const [value, setValue] = useState<string>("founder");
+    const [endReached, setEndReached] = useState<boolean>(false)
 
-    const { data, fetchMore } = useQuery<QueryAnnouncementsData, QueryAnnouncementsVars>(
+    const {data, fetchMore} = useQuery<QueryAnnouncementsData, QueryAnnouncementsVars>(
         ANNOUNCEMENTS_QUERY,
         {
             variables: {fellowship: value, offset: 0, limit: 1},
@@ -54,6 +55,7 @@ export default function Home() {
 
     function handleSetValue(value: string) {
         setValue(value);
+        setEndReached(false);
     }
 
     return (
@@ -81,31 +83,31 @@ export default function Home() {
                 {['founder', 'angel'].includes(value) &&
                 <div>
                     <Hr/>
-                     Check out the <Link href="/projects">projects</Link>!
+                    Check out the <Link href="/projects">projects</Link>!
                 </div>}
             </Card>
 
-            {({ data, fetchMore }: any) =>
-                data && (
-                    <AnnouncementFeed
-                        value={value}
-                        announcements={data.announcements || []}
-                        onLoadMore={() =>
-                            fetchMore({
-                                variables: {
-                                    offset: data.announcements.length
-                                },
-                                updateQuery: (prev: any, { fetchMoreResult }: any) => {
-                                    if (!fetchMoreResult) return prev;
-                                    return Object.assign({}, prev, {
-                                        announcements: [...prev.announcements, ...fetchMoreResult.announcements]
-                                    });
-                                }
-                            })
+            <AnnouncementFeed
+                value={value}
+                announcements={data?.announcements || []}
+                endReached={endReached}
+                onLoadMore={() =>
+                    fetchMore({
+                        variables: {
+                            offset: data?.announcements.length
+                        },
+                        updateQuery: (prev: any, {fetchMoreResult}: any) => {
+                            if (!fetchMoreResult || fetchMoreResult.announcements.length === 0) {
+                                setEndReached(true)
+                                return prev;
+                            }
+                            return Object.assign({}, prev, {
+                                announcements: [...prev.announcements, ...fetchMoreResult.announcements]
+                            });
                         }
-                    />
-                )
-            }
+                    })
+                }
+            />
         </Layout>
     )
 }
